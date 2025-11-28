@@ -1,4 +1,3 @@
-// backend/routes/checkout.js
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -12,7 +11,7 @@ function toCents(amount) {
 router.post('/create-checkout-session', async (req, res) => {
   try {
     console.log('[create-checkout-session] body:', JSON.stringify(req.body, null, 2));
-    const { items, customer, successUrl, cancelUrl, coupon } = req.body;
+    const { items, customer, successUrl, cancelUrl } = req.body;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' });
@@ -21,7 +20,7 @@ router.post('/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Customer email required' });
     }
 
-    // Create pending order record
+    // 1. Save pending order to database
     const totalAmount = Math.round(items.reduce((s, it) => s + it.price * it.quantity, 0) * 100);
     const order = await prisma.order.create({
       data: {
@@ -37,20 +36,26 @@ router.post('/create-checkout-session', async (req, res) => {
       },
     });
 
-    // Build Stripe line items
-    const line_items = items.map(it => ({
-      price_data: {
-        currency: 'pln',
-        product_data: {
-          name: it.name,
-          images: it.image ? [it.image] : [],
-        },
-        unit_amount: toCents(it.price),
-      },
-      quantity: it.quantity,
-    }));
+    // 2. Prepare items for Stripe (Fixing the image URL issue)
+    const line_items = items.map(it => {
+      // Send image to Stripe ONLY if it is a real URL (starts with http). 
+      // Local paths like "/src/assets/..." cause errors, so we send an empty array instead.
+      const images = (it.image && it.image.startsWith('http')) ? [it.image] : [];
 
-    // Very explicit: include PLN preference for p24 and locale=pl so Polish methods appear
+      return {
+        price_data: {
+          currency: 'pln',
+          product_data: {
+            name: it.name,
+            images: images, 
+          },
+          unit_amount: toCents(it.price),
+        },
+        quantity: it.quantity,
+      };
+    });
+
+    // 3. Create Stripe Session (Fixing the payment_method_options error)
     const sessionParams = {
       payment_method_types: ['card', 'p24', 'blik'],
       mode: 'payment',
@@ -64,29 +69,22 @@ router.post('/create-checkout-session', async (req, res) => {
       locale: 'pl',
       billing_address_collection: 'required',
       allow_promotion_codes: true,
-      payment_method_options: {
-        p24: {
-          // Stripe expects lower-case currency code
-          preferred_currency: 'pln'
-        }
-      }
+      // REMOVED: payment_method_options for p24 which caused the crash
     };
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
-    // Save session id into order
+    // 4. Update order with session ID
     await prisma.order.update({
       where: { id: order.id },
       data: { stripeSessionId: session.id },
     });
 
     console.log('[create-checkout-session] created session:', session.id);
-    // return session url (Stripe API vX+ supports session.url)
     return res.json({ url: session.url, sessionId: session.id, orderId: order.id });
+
   } catch (err) {
-    // Log full error for debugging
     console.error('[create-checkout-session] ERROR:', err);
-    // If stripe error, include stripe message
     const stripeMsg = err?.raw?.message || err.message;
     return res.status(500).json({ error: 'Failed to create checkout session', details: stripeMsg });
   }

@@ -40,7 +40,8 @@ const Checkout = () => {
 
     try {
       // Send cart to backend to create Checkout Session
-      const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/create-checkout-session`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4242';
+      const response = await fetch(`${apiUrl}/api/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
