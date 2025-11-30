@@ -37,7 +37,7 @@ const Index = () => {
               <span className="text-gradient">Nasze Produkty</span>
             </h2>
             <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
-              Odkryj profesjonalne latarki taktyczne i akcesoria najwyższej jakości
+              Odkryj viralowe akcesoria najwyższej jakości!
             </p>
           </div>
 
@@ -51,7 +51,8 @@ const Index = () => {
 
       <footer className="bg-white/10 backdrop-blur-md mt-20 py-8">
         <div className="container mx-auto px-4 text-center text-foreground/70">
-          <p>&copy; 2025 TacLight. Wszelkie prawa zastrzeżone.</p>
+          <p>&copy; 2025 KABU. Wszelkie prawa zastrzeżone.</p>
+          <p>Kontakt : kabu.biuro@gmail.com</p>
         </div>
       </footer>
     </div>

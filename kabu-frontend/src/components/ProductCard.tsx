@@ -33,8 +33,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
           alt={product.name}
           className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500"
         />
-        <div className="absolute top-3 right-3 bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">
-          {product.price.toFixed(2)} zł
+        <div className="absolute top-3 right-3">
+          {product.originalPrice ? (
+            <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold flex flex-col items-end">
+              <span className="text-xs line-through opacity-80">{product.originalPrice.toFixed(2)} zł</span>
+              <span>{product.price.toFixed(2)} zł</span>
+            </div>
+          ) : (
+            <div className="bg-primary text-white px-3 py-1 rounded-full text-sm font-bold">
+              {product.price.toFixed(2)} zł
+            </div>
+          )}
         </div>
       </div>
 

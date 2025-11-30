@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { CreditCard, Truck, CheckCircle } from "lucide-react";
 
 const Checkout = () => {
-  const { items, total, clearCart } = useCart();
+  const { items, total, finalTotal, promoCode, clearCart } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -49,6 +49,7 @@ const Checkout = () => {
         body: JSON.stringify({
           items: items.map(it => ({ id: it.id, name: it.name, price: it.price, quantity: it.quantity, image: it.image })),
           customer: formData,
+          promoCode: promoCode,
           successUrl: (window.location.origin + '/checkout-success?session_id={CHECKOUT_SESSION_ID}'),
           cancelUrl: (window.location.origin + '/cart')
         })
@@ -194,7 +195,7 @@ const Checkout = () => {
                     disabled={loading}
                   >
                     <CheckCircle className="w-5 h-5 mr-2" />
-                    Zapłać {(total).toFixed(2)} zł
+                    Zapłać {finalTotal.toFixed(2)} zł
                   </Button>
                 </div>
               </form>
@@ -231,8 +232,9 @@ const Checkout = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xl font-bold">
                     <span>Suma:</span>
-                    <span className="text-primary">{total.toFixed(2)} zł</span>
+                    <span className="text-primary">{finalTotal.toFixed(2)} zł</span>
                   </div>
+                    {promoCode && <p className="text-sm text-green-600 text-right">Uwzględniono kod: {promoCode}</p>}
                 </div>
               </div>
             </div>

@@ -139,8 +139,26 @@ const ProductDetail = () => {
                   </span>
                 </div>
 
-                <div className="text-5xl font-bold text-primary mb-8">
-                  {product.price.toFixed(2)} zł
+                <div className="mb-8">
+                  {product.originalPrice ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl text-muted-foreground line-through">
+                          {product.originalPrice.toFixed(2)} zł
+                        </span>
+                        <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                          -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+                        </span>
+                      </div>
+                      <div className="text-5xl font-bold text-red-500">
+                        {product.price.toFixed(2)} zł
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-5xl font-bold text-primary">
+                      {product.price.toFixed(2)} zł
+                    </div>
+                  )}
                 </div>
               </div>
 

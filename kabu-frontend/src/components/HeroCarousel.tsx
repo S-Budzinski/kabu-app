@@ -82,10 +82,10 @@ const HeroCarousel = () => {
       {/* Text Overlay */}
       <div className="absolute bottom-12 left-8 text-white animate-fade-in">
         <h2 className="text-4xl md:text-5xl font-bold mb-2 drop-shadow-lg">
-          Profesjonalne Oświetlenie
+          Viralove akcesoria
         </h2>
         <p className="text-lg md:text-xl drop-shadow-md">
-          Niezawodne w każdych warunkach
+          Idealne do Twojego pokoju!
         </p>
       </div>
     </div>

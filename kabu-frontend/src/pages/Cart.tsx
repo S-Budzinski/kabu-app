@@ -8,14 +8,24 @@ import { Minus, Plus, Trash2, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 const Cart = () => {
-  const { items, updateQuantity, removeFromCart, total } = useCart();
+  const { 
+    items, 
+    updateQuantity, 
+    removeFromCart, 
+    total,          // To jest subtotal
+    discountAmount, // To jest kwota rabatu
+    finalTotal,     // To jest kwota końcowa
+    applyPromo,
+    promoCode: activeCode // Kod zapisany w kontekście
+  } = useCart();
   const navigate = useNavigate();
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [inputCode, setInputCode] = useState("");
 
   const handleApplyPromo = () => {
-    if (promoCode.toUpperCase() === "TACLIGHT10") {
-      setDiscount(0.1);
+    const success = applyPromo(inputCode);
+    if (success) {
       toast.success("Kod rabatowy zastosowany!", {
         description: "10% zniżki",
       });
@@ -24,9 +34,6 @@ const Cart = () => {
     }
   };
 
-  const subtotal = total;
-  const discountAmount = subtotal * discount;
-  const finalTotal = subtotal - discountAmount;
 
   if (items.length === 0) {
     return (
@@ -121,17 +128,18 @@ const Cart = () => {
                   <div className="flex gap-2">
                     <Input
                       placeholder="Kod rabatowy"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
+                      value={inputCode}
+                      onChange={(e) => setInputCode(e.target.value)}
                     />
                     <Button onClick={handleApplyPromo} variant="outline">
                       <Tag className="w-4 h-4" />
                     </Button>
                   </div>
 
-                  {discount > 0 && (
+                  {/* Sprawdzamy czy discountAmount > 0 zamiast lokalnego stanu */}
+                  {discountAmount > 0 && (
                     <div className="bg-green-50 text-green-700 px-4 py-2 rounded-lg text-sm">
-                      Rabat 10% zastosowany!
+                      Rabat 10% zastosowany! ({activeCode})
                     </div>
                   )}
                 </div>
@@ -140,10 +148,10 @@ const Cart = () => {
                   <div className="flex justify-between">
                     <span>Suma częściowa:</span>
                     <span className="font-semibold">
-                      {subtotal.toFixed(2)} zł
+                      {total.toFixed(2)} zł
                     </span>
                   </div>
-                  {discount > 0 && (
+                  {discountAmount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Rabat:</span>
                       <span className="font-semibold">

@@ -14,14 +14,22 @@ interface CartContextType {
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
-  total: number;
+  total: number;      // Suma produktów (subtotal)
   itemCount: number;
+  // --- NOWE POLA ---
+  promoCode: string;
+  discountAmount: number;
+  finalTotal: number; // Suma po rabacie
+  applyPromo: (code: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  // Nowy stan dla kodu rabatowego
+  const [promoCode, setPromoCode] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
 
   const addToCart = (product: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -53,9 +61,26 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const clearCart = () => {
     setItems([]);
+    setPromoCode(""); // Reset kodu po wyczyszczeniu koszyka
+    setDiscountPercent(0);
+  };
+
+  // --- NOWA LOGIKA RABATOWA ---
+  const applyPromo = (code: string) => {
+    if (code.toUpperCase() === "TACLIGHT10") {
+      setPromoCode("TACLIGHT10");
+      setDiscountPercent(0.1); // 10%
+      return true;
+    } else {
+      setPromoCode("");
+      setDiscountPercent(0);
+      return false;
+    }
   };
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const discountAmount = total * discountPercent;
+  const finalTotal = total - discountAmount;
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -68,6 +93,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         clearCart,
         total,
         itemCount,
+        // Eksportujemy nowe wartości
+        promoCode,
+        discountAmount,
+        finalTotal,
+        applyPromo,
       }}
     >
       {children}
