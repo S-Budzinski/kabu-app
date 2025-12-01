@@ -3,6 +3,7 @@ import { ShoppingCart, Menu, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useState } from "react";
+import logo from '@/assets/KABU_black.png'
 
 const Navbar = () => {
   const { itemCount } = useCart();
@@ -16,8 +17,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-            <Zap className="w-6 h-6 text-primary" />
-            <span className="text-gradient">TacLight</span>
+            <img src={logo} className="h-12 w-auto object-contain"/>
           </Link>
 
 

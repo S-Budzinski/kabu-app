@@ -17,6 +17,7 @@ interface CartContextType {
   total: number;      // Suma produktów (subtotal)
   itemCount: number;
   // --- NOWE POLA ---
+  shippingCost: number;
   promoCode: string;
   discountAmount: number;
   finalTotal: number; // Suma po rabacie
@@ -67,8 +68,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   // --- NOWA LOGIKA RABATOWA ---
   const applyPromo = (code: string) => {
-    if (code.toUpperCase() === "TACLIGHT10") {
-      setPromoCode("TACLIGHT10");
+    if (code.toUpperCase() === "XMASKABU10") {
+      setPromoCode("XMASKABU10");
       setDiscountPercent(0.1); // 10%
       return true;
     } else {
@@ -77,10 +78,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       return false;
     }
   };
-
+  const shippingCost = 9.90;
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discountAmount = total * discountPercent;
-  const finalTotal = total - discountAmount;
+  const finalTotal = (total - discountAmount) + shippingCost;
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -97,6 +98,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         promoCode,
         discountAmount,
         finalTotal,
+        shippingCost,
         applyPromo,
       }}
     >

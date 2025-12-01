@@ -8,39 +8,39 @@ const prisma = new PrismaClient();
 async function main() {
   const products = [
     {
-      sku: 'TAC-FLASH-PRO',
-      name: 'Tactical Flashlight Pro',
-      description: 'Powerful torch with multiple modes.',
-      price: 129.99,
-      image: 'https://vivid-shop-zone.lovable.app/product/tactical-flashlight-pro',
-    },
-    {
-      sku: 'UNIV-CHARGER-EL',
-      name: 'Universal Charger Elite',
-      description: 'Fast charger for multiple devices.',
+      sku: 'LAMPKA-LIS',
+      name: 'Lampka pixelowa Lis',
+      description: 'Idealna lampka Lis do pokoju lub na biurko',
       price: 89.99,
-      image: 'https://vivid-shop-zone.lovable.app/product/universal-charger-elite',
+      image: '',
     },
     {
-      sku: 'TAC-FLASH-MINI',
-      name: 'Tactical Flashlight Mini',
-      description: 'Compact torch for everyday carry.',
-      price: 59.99,
-      image: 'https://vivid-shop-zone.lovable.app/product/tactical-flashlight-mini',
-    },
-    {
-      sku: 'CAR-CHG-DUAL',
-      name: 'Car Charger Dual',
-      description: 'Dual-port car charger.',
-      price: 49.99,
-      image: 'https://vivid-shop-zone.lovable.app/product/car-charger-dual',
-    },
-    {
-      sku: 'HEADLAMP-PRO',
-      name: 'Headlamp Pro',
-      description: 'Hands-free headlamp.',
+      sku: 'LAMPKA-PSZCZ',
+      name: 'Lampka Latajaca Pszczola',
+      description: 'Lampka na biurko Latajaca Pszczola',
       price: 79.99,
-      image: 'https://vivid-shop-zone.lovable.app/product/headlamp-pro',
+      image: '',
+    },
+    {
+      sku: 'BRELOK-LAMP',
+      name: 'Swiecacy brelok do kluczy Pochodnia',
+      description: 'Swiecacy brelok idealnie sprawi sie podczas nocy',
+      price: 24.99,
+      image: '',
+    },
+    {
+      sku: 'LAMPION-LAMP',
+      name: 'Lampka na sciane Lampion',
+      description: 'Lampka na sciane Lampion RGB USB-C',
+      price: 89.99,
+      image: '',
+    },
+    {
+      sku: 'AXOLOTL-LAMP',
+      name: 'Lampka Axolotl',
+      description: 'Kolorowa lampka Axolotl',
+      price: 99.99,
+      image: '',
     },
   ];
 

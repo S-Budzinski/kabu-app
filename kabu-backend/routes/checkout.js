@@ -4,6 +4,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const nodemailer = require('nodemailer'); // <--- NOWOŚĆ
+const SHIPPING_COST = 9.90;
 
 // Konfiguracja wysyłki maili (Gmail)
 const transporter = nodemailer.createTransport({
@@ -32,9 +33,9 @@ router.post('/create-checkout-session', async (req, res) => {
     }
 
     // 1. Logika rabatowa
-    const discountMultiplier = (promoCode === 'TACLIGHT10') ? 0.9 : 1.0; 
+    const discountMultiplier = (promoCode === 'XMASKABU10') ? 0.9 : 1.0; 
     const originalTotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
-    const totalAmount = Math.round(originalTotal * discountMultiplier * 100); // W groszach
+    const totalAmount = Math.round(((originalTotal * discountMultiplier) + SHIPPING_COST) * 100); // W groszach
 
     // 2. Zapis zamówienia WRAZ Z PRODUKTAMI (OrderItem)
     // Prisma pozwala utworzyć powiązane rekordy w jednym zapytaniu!
@@ -75,6 +76,18 @@ router.post('/create-checkout-session', async (req, res) => {
         },
         quantity: it.quantity,
       };
+    });
+
+    line_items.push({
+      price_data: {
+        currency: 'pln',
+        product_data: { 
+          name: 'Dostawa',
+          description: 'Szybka wysyłka'
+        },
+        unit_amount: toCents(SHIPPING_COST),
+      },
+      quantity: 1,
     });
 
     const sessionParams = {

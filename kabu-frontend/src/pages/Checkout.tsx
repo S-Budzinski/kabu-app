@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { CreditCard, Truck, CheckCircle } from "lucide-react";
 
 const Checkout = () => {
-  const { items, total, finalTotal, promoCode, clearCart } = useCart();
+  const { items, total, finalTotal, promoCode, clearCart, discountAmount, shippingCost} = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -229,12 +229,33 @@ const Checkout = () => {
                   ))}
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xl font-bold">
+                {/* TWÓJ URYWEK KODU (Zaktualizowany o zmienne) */}
+                <div className="space-y-3">
+                  <div className="flex justify-between text-lg">
+                    <span>Suma produktów:</span>
+                    <span>{total.toFixed(2)} zł</span>
+                  </div>
+                  
+                  {/* Wyświetlanie rabatu jeśli istnieje */}
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-lg text-green-600">
+                      <span>Rabat ({promoCode}):</span>
+                      <span>-{discountAmount.toFixed(2)} zł</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-lg items-center">
+                    <span className="flex items-center gap-2">
+                      <Truck className="w-4 h-4" />
+                      Dostawa:
+                    </span>
+                    <span>{shippingCost.toFixed(2)} zł</span>
+                  </div>
+
+                  <div className="flex justify-between text-xl font-bold pt-3 border-t">
                     <span>Suma:</span>
                     <span className="text-primary">{finalTotal.toFixed(2)} zł</span>
                   </div>
-                    {promoCode && <p className="text-sm text-green-600 text-right">Uwzględniono kod: {promoCode}</p>}
                 </div>
               </div>
             </div>

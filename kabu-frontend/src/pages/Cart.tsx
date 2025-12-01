@@ -162,7 +162,7 @@ const Cart = () => {
                   <div className="flex justify-between text-xl font-bold">
                     <span>Suma:</span>
                     <span className="text-primary">
-                      {finalTotal.toFixed(2)} zł
+                      {total.toFixed(2)} zł
                     </span>
                   </div>
                 </div>
