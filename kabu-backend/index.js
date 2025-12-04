@@ -57,8 +57,8 @@ app.use('/api', checkoutRoutes);
 app.get('/', (req, res) => res.send('Kabu Backend is running!'));
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date(), port: PORT }));
 
-app.listen(PORT, () => {
-  console.log(`✅ Server listening on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server listening on port ${PORT} and host is ${HOST}`);
   console.log(`   CORS origin allowed: ${clientUrl}`);
   console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
 });
