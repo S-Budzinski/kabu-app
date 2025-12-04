@@ -11,6 +11,9 @@ const webhookRoutes = require('./routes/webhook');
 const app = express();
 const PORT = process.env.PORT || 4242;
 
+
+const HOST = '0.0.0.0';
+
 // 1. Bezpieczeństwo (Helmet ukrywa nagłówki Expressa)
 // Jeśli nie masz helmet, zainstaluj go: npm install helmet
 app.set('trust proxy', 1);
@@ -51,7 +54,8 @@ app.use('/api/products', productsRoutes);
 app.use('/api', checkoutRoutes);
 
 // Health check (przydatne dla load balancerów / monitoringu)
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+app.get('/', (req, res) => res.send('Kabu Backend is running!'));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date(), port: PORT }));
 
 app.listen(PORT, () => {
   console.log(`✅ Server listening on port ${PORT}`);
