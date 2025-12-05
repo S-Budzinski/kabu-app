@@ -1,105 +1,64 @@
-console.log("1. [START] Uruchamianie index.js...");
-
-try {
-  require('dotenv').config();
-  console.log("2. Dotenv załadowany");
-} catch (e) {
-  console.error("BŁĄD Dotenv:", e);
-}
-
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression'); // upewnij się, że masz to w package.json!
+const helmet = require('helmet'); 
 const rateLimit = require('express-rate-limit');
-
-console.log("3. Biblioteki zewnętrzne załadowane");
+const compression = require('compression');// Warto dodać dla bezpieczeństwa (npm install helmet)
+const checkoutRoutes = require('./routes/checkout');
+const productsRoutes = require('./routes/products');
+const webhookRoutes = require('./routes/webhook');
 
 const app = express();
-// Usuń process.env.PORT || 4242 -> pozwólmy Railway decydować, albo logujmy to
 const PORT = process.env.PORT || 4242;
+
+
 const HOST = '0.0.0.0';
 
-console.log(`4. Konfiguracja: PORT=${PORT}, HOST=${HOST}`);
-
-// --- BEZPIECZNE ŁADOWANIE TRAS (To tu pewnie jest błąd) ---
-let checkoutRoutes, productsRoutes, webhookRoutes;
-
-try {
-  console.log("5. Próba ładowania routes/checkout...");
-  checkoutRoutes = require('./routes/checkout');
-  console.log("   -> routes/checkout OK");
-} catch (err) {
-  console.error("❌ BŁĄD ładowania routes/checkout:", err.message);
-}
-
-try {
-  console.log("6. Próba ładowania routes/products...");
-  productsRoutes = require('./routes/products');
-  console.log("   -> routes/products OK");
-} catch (err) {
-  console.error("❌ BŁĄD ładowania routes/products:", err.message);
-}
-
-try {
-  console.log("7. Próba ładowania routes/webhook...");
-  webhookRoutes = require('./routes/webhook');
-  console.log("   -> routes/webhook OK");
-} catch (err) {
-  console.error("❌ BŁĄD ładowania routes/webhook:", err.message);
-}
-
-// --- MIDDLEWARE ---
+// 1. Bezpieczeństwo (Helmet ukrywa nagłówki Expressa)
+// Jeśli nie masz helmet, zainstaluj go: npm install helmet
 app.set('trust proxy', 1);
-app.use(helmet());
+app.use(helmet()); 
 app.use(compression());
+// 4. Rate Limiting (Ochrona przed DDoS/Brute Force)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minut
+  max: 100, // Limit 100 zapytań z jednego IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api', limiter);
+// 2. CORS - Skonfiguruj pod produkcję
+// Na produkcji CLIENT_URL powinien być dokładnym adresem Twojej domeny (np. https://twojsklep.pl)
+const clientUrl = process.env.CLIENT_URL; // np. 'https://twoja-domena.pl'
+if (!clientUrl) {
+  console.warn("⚠️ OSTRZEŻENIE: Brak CLIENT_URL w .env! CORS może nie działać poprawnie.");
+}
 
-const clientUrl = process.env.CLIENT_URL || '*';
 app.use(cors({
   origin: clientUrl,
   methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
 
-// --- TRASY ---
-// Webhook
-if (webhookRoutes) {
-  app.use('/api/webhook', webhookRoutes);
-} else {
-  console.warn("⚠️ Webhook routes nie zostały załadowane (pomijam)");
-}
+// 3. WAŻNE: Webhook Stripe musi być PRZED express.json()
+// Stripe wymaga surowego body do weryfikacji podpisu. Jeśli parser JSON zadziała wcześniej, weryfikacja się nie uda.
+app.use('/api/webhook', webhookRoutes);
 
+// 4. Parser JSON dla reszty aplikacji
+// Używamy go dopiero tutaj, żeby nie zepsuć webhooka powyżej
 app.use(express.json());
 
-if (productsRoutes) app.use('/api/products', productsRoutes);
-if (checkoutRoutes) app.use('/api', checkoutRoutes);
+// 5. Trasy API
+app.use('/api/products', productsRoutes);
+app.use('/api', checkoutRoutes);
 
-// --- HEALTH CHECK ---
-app.get('/', (req, res) => {
-  console.log("Otrzymano zapytanie GET /");
-  res.send('Kabu Backend is running (DEBUG MODE)!');
-});
+// Health check (przydatne dla load balancerów / monitoringu)
+app.get('/', (req, res) => res.send('Kabu Backend is running!'));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date(), port: PORT }));
 
-// --- START SERWERA ---
-console.log("8. Próba uruchomienia app.listen...");
-
-const server = app.listen(PORT, HOST, () => {
-  console.log("=========================================");
-  console.log(`✅ SUKCES: Server listening on ${HOST}:${PORT}`);
-  console.log(`   Client URL: ${clientUrl}`);
-  console.log("=========================================");
-});
-
-// Obsługa błędów startu
-server.on('error', (e) => {
-  console.error("❌ BŁĄD SERWERA (server.on error):", e);
-});
-
-// Łapanie nieobsłużonych wyjątków, żeby serwer nie milczał
-process.on('uncaughtException', (err) => {
-  console.error('❌ CRITICAL ERROR (uncaughtException):', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ CRITICAL ERROR (unhandledRejection):', reason);
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server listening on port ${PORT} and host is ${HOST}`);
+  console.log(`   CORS origin allowed: ${clientUrl}`);
+  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
 });
