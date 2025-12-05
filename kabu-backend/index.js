@@ -1,64 +1,72 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet'); 
+const helmet = require('helmet');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-const compression = require('compression');// Warto dodać dla bezpieczeństwa (npm install helmet)
-const checkoutRoutes = require('./routes/checkout');
-const productsRoutes = require('./routes/products');
-const webhookRoutes = require('./routes/webhook');
 
 const app = express();
 const PORT = process.env.PORT || 4242;
-
-
 const HOST = '0.0.0.0';
 
-// 1. Bezpieczeństwo (Helmet ukrywa nagłówki Expressa)
-// Jeśli nie masz helmet, zainstaluj go: npm install helmet
-app.set('trust proxy', 1);
-app.use(helmet()); 
-app.use(compression());
-// 4. Rate Limiting (Ochrona przed DDoS/Brute Force)
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minut
-  max: 100, // Limit 100 zapytań z jednego IP
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api', limiter);
-// 2. CORS - Skonfiguruj pod produkcję
-// Na produkcji CLIENT_URL powinien być dokładnym adresem Twojej domeny (np. https://twojsklep.pl)
-const clientUrl = process.env.CLIENT_URL; // np. 'https://twoja-domena.pl'
-if (!clientUrl) {
-  console.warn("⚠️ OSTRZEŻENIE: Brak CLIENT_URL w .env! CORS może nie działać poprawnie.");
-}
+// 1. Diagnostyka Startowa (Logujemy co mamy)
+console.log('--- START SERWERA ---');
+console.log(`PORT: ${PORT}`);
+console.log(`HOST: ${HOST}`);
+console.log(`DATABASE_URL obecny?: ${!!process.env.DATABASE_URL}`);
+console.log(`STRIPE_SECRET_KEY obecny?: ${!!process.env.STRIPE_SECRET_KEY}`);
 
+// 2. Middleware (Bezpieczeństwo)
+app.set('trust proxy', 1);
+app.use(helmet());
+app.use(compression());
 app.use(cors({
-  origin: clientUrl,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: process.env.CLIENT_URL || '*',
   credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 3. WAŻNE: Webhook Stripe musi być PRZED express.json()
-// Stripe wymaga surowego body do weryfikacji podpisu. Jeśli parser JSON zadziała wcześniej, weryfikacja się nie uda.
-app.use('/api/webhook', webhookRoutes);
+// 3. Bezpieczne ładowanie tras (Try-Catch)
+// Dzięki temu, jeśli brakuje kluczy, serwer nie wybuchnie, tylko wypisze błąd.
+const loadRoute = (path) => {
+  try {
+    return require(path);
+  } catch (err) {
+    console.error(`❌ BŁĄD ładowania trasy ${path}:`, err.message);
+    return null; // Zwracamy null, żeby aplikacja szła dalej
+  }
+};
 
-// 4. Parser JSON dla reszty aplikacji
-// Używamy go dopiero tutaj, żeby nie zepsuć webhooka powyżej
-app.use(express.json());
+const webhookRoutes = loadRoute('./routes/webhook');
+const productsRoutes = loadRoute('./routes/products');
+const checkoutRoutes = loadRoute('./routes/checkout');
 
-// 5. Trasy API
-app.use('/api/products', productsRoutes);
-app.use('/api', checkoutRoutes);
+// 4. Podpinanie tras (Tylko jeśli się załadowały)
+if (webhookRoutes) app.use('/api/webhook', webhookRoutes);
+app.use(express.json()); // Parser JSON po webhooku!
+if (productsRoutes) app.use('/api/products', productsRoutes);
+if (checkoutRoutes) app.use('/api', checkoutRoutes);
 
-// Health check (przydatne dla load balancerów / monitoringu)
-app.get('/', (req, res) => res.send('Kabu Backend is running!'));
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date(), port: PORT }));
+// 5. Endpointy Diagnostyczne
+app.get('/', (req, res) => res.send('Kabu Backend działa!'));
+app.get('/api/health', (req, res) => {
+  // Sprawdzamy stan tras w odpowiedzi
+  res.json({
+    status: 'ok',
+    checks: {
+      stripe_key: !!process.env.STRIPE_SECRET_KEY,
+      database_url: !!process.env.DATABASE_URL,
+      routes_loaded: {
+        checkout: !!checkoutRoutes,
+        webhook: !!webhookRoutes,
+        products: !!productsRoutes
+      }
+    }
+  });
+});
 
+// 6. Start Serwera
 app.listen(PORT, HOST, () => {
-  console.log(`✅ Server listening on port ${PORT} and host is ${HOST}`);
-  console.log(`   CORS origin allowed: ${clientUrl}`);
-  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  console.log(`✅ Server listening on http://${HOST}:${PORT}`);
 });
