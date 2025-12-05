@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node simple-server.js",
+    "start": "node index.js",
     "prisma": "prisma"
   },
   "dependencies": {
